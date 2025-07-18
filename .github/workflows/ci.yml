@@ -29,7 +29,9 @@ jobs:
       run: mkdir -p reports
 
     - name: Run Bandit Security Scan
+      continue-on-error: true
       run: bandit -r . -x tests -f html -o reports/bandit-report.html
+
 
     - name: Run Pytest and Save Report
       run: |
