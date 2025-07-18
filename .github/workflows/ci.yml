@@ -25,13 +25,31 @@ jobs:
         pip install -r requirements.txt || true
         pip install pytest bandit
 
-    - name: Run Bandit Security Scan
-      run: |
-        bandit -r . -x tests
+    - name: Create reports directory
+      run: mkdir -p reports
 
-    - name: Run Tests
+    - name: Run Bandit Security Scan
+      run: bandit -r . -x tests -f html -o reports/bandit-report.html
+
+    - name: Run Pytest and Save Report
       run: |
-        pytest
+        pytest --junitxml=reports/pytest-report.xml || true
+
+    - name: Create Artifact ZIP (excluding .git and __pycache__)
+      run: |
+        zip -r ping-pong-artifact.zip . -x "*.git*" "*__pycache__*" "*.pytest_cache*" "*.mypy_cache*"
+
+    - name: Upload Reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-and-test-reports
+        path: reports/
+
+    - name: Upload Build Artifact ZIP
+      uses: actions/upload-artifact@v4
+      with:
+        name: ping-pong-artifact
+        path: ping-pong-artifact.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -43,4 +61,4 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Deploy placeholder
-      run: echo "Deploy step goes here (e.g., upload to S3, Docker build/push, etc.)"
+      run: echo "Deploy step goes here (e.g., Docker build/push, upload to cloud, etc.)"
